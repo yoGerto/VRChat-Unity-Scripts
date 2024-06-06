@@ -99,6 +99,8 @@ public class DoubleJump : UdonSharpBehaviour
         float sinOfRotation = Mathf.Sin(currentRotationRadians);
         float cosinOfRotation = Mathf.Cos(currentRotationRadians);
 
+        float ymovement = 6.0f;
+
         Vector3 playerMovementVector = player.GetVelocity();
 
         SetMovementParams(player.IsPlayerGrounded());
@@ -113,16 +115,12 @@ public class DoubleJump : UdonSharpBehaviour
             }
             else
             {
-                //timer += Time.deltaTime;
                 //timer = Mathf.Clamp(timer, 0.0f, 3.0f);
                 //float movement = 0.1f;
 
                 rotationText.text = Time.deltaTime.ToString();
 
                 float movementlimit = 3.0f;
-                float ymovement = playerMovementVector[1];
-
-                playerMovementVector[1] = 0.0f;
 
                 float xlimit = (movementlimit * cosinOfRotation * playerMoveHorizontal) + (movementlimit * sinOfRotation * playerMoveVertical);
                 float ylimit = (movementlimit * sinOfRotation * -1 * playerMoveHorizontal) + (movementlimit * cosinOfRotation * playerMoveVertical);
@@ -137,17 +135,15 @@ public class DoubleJump : UdonSharpBehaviour
                     float difference = ylimit - playerMovementVector[2];
                     playerMovementVector[2] += (difference * (float)0.1);
                 }
-
-                playerMovementVector[1] = ymovement;
             }
 
             if (spaceIsHeld)
             {
-                playerMovementVector[1] += 0.1f;
+                playerMovementVector[1] += ymovement * Time.deltaTime;
             }
             else
             {
-                playerMovementVector[1] -= 0.1f;
+                playerMovementVector[1] -= ymovement * Time.deltaTime;
             }
 
             if (playerMovementVector[1] > 3)
