@@ -8,6 +8,7 @@ using VRC.Udon;
 
 public class MovementSpeedScaling : UdonSharpBehaviour
 {
+    /*
     public Slider scalingFactorSlider;
     public Toggle scalingFactorToggle;
     Vector3 playerCoords;
@@ -62,4 +63,5 @@ public class MovementSpeedScaling : UdonSharpBehaviour
         }
 
     }
+    */
 }

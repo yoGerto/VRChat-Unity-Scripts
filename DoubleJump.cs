@@ -15,7 +15,12 @@ using VRC.Udon.Serialization.OdinSerializer;
 
 public class DoubleJump : UdonSharpBehaviour
 {
-    private readonly float  jumpVelocity = 3.0f;
+    private readonly float averageFrameTime = (float)1 / 60;
+    private readonly float ymovement = 6.0f;
+    private readonly float movementlimit = 3.0f;
+    private readonly float targetScaling = 0.05f;
+    private float maths;
+
     private VRCPlayerApi    player;
     private bool            spaceIsHeld;
 
@@ -28,6 +33,7 @@ public class DoubleJump : UdonSharpBehaviour
 
     void Start()
     {
+        maths = targetScaling * averageFrameTime;
         player = Networking.LocalPlayer;
         player.SetGravityStrength(1);
 
@@ -86,39 +92,51 @@ public class DoubleJump : UdonSharpBehaviour
         float sinOfRotation = Mathf.Sin(currentRotationRadians);
         float cosinOfRotation = Mathf.Cos(currentRotationRadians);
 
-        float ymovement = 6.0f;
-
         Vector3 playerMovementVector = player.GetVelocity();
 
         SetMovementParams(player.IsPlayerGrounded());
+
+        //Debug.Log("targetScaling = " + targetScaling);
+        //Debug.Log("averageFrameTime = " + averageFrameTime);
+        //Debug.Log("maths = "+ maths);
+        //Debug.Log(newTargetScaling);
+        //Debug.Log(1 - newTargetScaling);
+
+        float newTargetScaling = Time.deltaTime / averageFrameTime;
+
+        //Debug.Log((float)0.1 / newTargetScaling);
+
+        //rotationText.text = Mathf.Pow(0.95f, newTargetScaling).ToString();
+        rotationText.text = playerMovementVector[0].ToString();
 
         if (!player.IsPlayerGrounded())
         {
             if (playerMoveHorizontal == 0 && playerMoveVertical == 0)
             {
-                playerMovementVector[0] = playerMovementVector[0] * (float)0.95;
-                playerMovementVector[2] = playerMovementVector[2] * (float)0.95;
+                playerMovementVector[0] = playerMovementVector[0] * Mathf.Pow(0.95f, newTargetScaling);
+                playerMovementVector[2] = playerMovementVector[2] * Mathf.Pow(0.95f, newTargetScaling);
             }
             else
             {
-
-                rotationText.text = Time.deltaTime.ToString();
-
-                float movementlimit = 3.0f;
-
                 float xlimit = (movementlimit * cosinOfRotation * playerMoveHorizontal) + (movementlimit * sinOfRotation * playerMoveVertical);
                 float ylimit = (movementlimit * sinOfRotation * -1 * playerMoveHorizontal) + (movementlimit * cosinOfRotation * playerMoveVertical);
 
                 if (!(playerMovementVector[0] == xlimit))
                 {
                     float difference = xlimit - playerMovementVector[0];
-                    playerMovementVector[0] += (difference * (float)0.1);
+                    playerMovementVector[0] += (difference * ((float)0.1 * newTargetScaling));
+                    rotationText.text = difference.ToString("0.0000") + "\n";
+                    rotationText.text += ((float)0.1 * newTargetScaling).ToString("0.0000") + "\n";
+                    rotationText.text += "\n" + "\n";
                 }
                 if (!(playerMovementVector[2] == ylimit))
                 {
                     float difference = ylimit - playerMovementVector[2];
-                    playerMovementVector[2] += (difference * (float)0.1);
+                    playerMovementVector[2] += (difference * ((float)0.1 * newTargetScaling));
+                    rotationText.text += difference.ToString("0.0000") + "\n";
+                    rotationText.text += ((float)0.1 * newTargetScaling).ToString("0.0000") + "\n";
                 }
+             
             }
 
             if (spaceIsHeld)
@@ -137,5 +155,4 @@ public class DoubleJump : UdonSharpBehaviour
             player.SetVelocity(playerMovementVector);
         }
     }
-
 }
