@@ -15,6 +15,6 @@ public class Spawner : UdonSharpBehaviour
 
     public override void Interact()
     {
-        SpawnedInCube.Spawn();
+        //SpawnedInCube.Spawn();
     }
 }

@@ -148,9 +148,9 @@ public class DoubleJump : UdonSharpBehaviour
                 playerMovementVector[1] -= ymovement * Time.deltaTime;
             }
 
-            if (playerMovementVector[1] > 3)
+            if (playerMovementVector[1] > 10.0f)
             {
-                playerMovementVector[1] = 3.0f;
+                playerMovementVector[1] = 10.0f;
             }
             player.SetVelocity(playerMovementVector);
         }

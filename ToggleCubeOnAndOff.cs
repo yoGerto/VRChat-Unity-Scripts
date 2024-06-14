@@ -29,13 +29,13 @@ public class ToggleCubeOnAndOff : UdonSharpBehaviour
                 if (cubeToggle.isOn)
                 {
                     //spawn cube
-                    SpawnedInCube.Spawn();
+                    //SpawnedInCube.Spawn();
 
                 }
                 else
                 {
                     //despawn cube
-                    SpawnedInCube.Despawn();
+                    //SpawnedInCube.Despawn();
                 }
             }
         }
