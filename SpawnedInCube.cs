@@ -25,33 +25,3 @@ public class SpawnedInCube : UdonSharpBehaviour
     }
 
 }
-
-/*
-public void Spawn()
-{
-    SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "SpawnNetworked");
-}
-
-public void SpawnNetworked()
-{
-    spawnedCube = Object.Instantiate(cube);
-    spawnedCube.transform.position = cubeOrigin;
-    Networking.SetOwner(Networking.LocalPlayer, spawnedCube);
-    //SendCustomEventDelayedSeconds("MoveNewCube", 0.01f);
-}
-
-public void Despawn()
-{
-    SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, "DespawnNetworked");
-}
-
-public void DespawnNetworked()
-{
-    Object.Destroy(spawnedCube);
-}
-
-public void MoveNewCube()
-{
-    spawnedCube.transform.position = cubeOrigin;
-}
-*/
