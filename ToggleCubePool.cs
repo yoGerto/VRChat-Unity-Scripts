@@ -15,7 +15,7 @@ public class ToggleCubePool : UdonSharpBehaviour
     private GameObject cubeFromPool;
     private VRCPlayerApi player;
     private bool hasCube = false;
-    //private bool tracking = false;
+    private int cubeIter = -1;
 
     void Start()
     {
@@ -25,8 +25,7 @@ public class ToggleCubePool : UdonSharpBehaviour
         // Set correct length of cubeArrayStatus
         cubeArrayStatus = new bool[cubeArray.Length];
 
-        // Populate cubeArrayStatus with false value
-        
+        // Populate cubeArrayStatus with 'false' value
         for (int i = 0; i < cubeArrayStatus.Length; i++)
         {
             cubeArrayStatus[i] = false;
@@ -36,50 +35,56 @@ public class ToggleCubePool : UdonSharpBehaviour
 
     public override void Interact()
     {
-        if (Networking.GetOwner(this.gameObject) != player)
-        {
-            Networking.SetOwner(player, this.gameObject);
-        }
+        // Set local player as owner of toggle, as this is required to use RequestSerialization
+        Networking.SetOwner(player, this.gameObject);
 
-        if (!hasCube)
-        {
-            cubeArrayStatus[0] = true;
-            cubeFromPool = cubeArray[0];
-            Networking.SetOwner(player, cubeFromPool);
-            RequestSerialization();
-            OnDeserialization();
-        }
-        else
-        {
-            cubeFromPool.SetActive(false);
-        }
-        /*
         // Rather than looking at the Network Ownership of the GameObject, perhaps we can use if it is active or not
         for (int i = 0; i < cubeArray.Length; i++)
         {
-            if (!cubeArray[i].activeInHierarchy)
+            if (!hasCube) // If Player doesn't have a cube and wants one
             {
-                cubeArrayStatus[i] = true;
+                if (!cubeArray[i].activeInHierarchy)
+                {
+                    cubeArrayStatus[i] = true;
 
-                // Store cubeArray index in local variable for later use?
-                cubeFromPool = cubeArray[i];
+                    // Set Ownership of GameObject to the player that interacting player
+                    // This should be sycned over the network so can be done here instead
+                    Networking.SetOwner(player, cubeArray[i]);
 
-                // Set Ownership of GameObject to the player that interacting player
-                // This should be sycned over the network so can be done here instead
-                Networking.SetOwner(player, cubeFromPool);
+                    // Serialise to sync cubeArrayStatus to all players
+                    RequestSerialization();
+                    OnDeserialization();
 
-                // Serialise to sync cubeArrayStatus
-                RequestSerialization();
-                OnDeserialization();
+                    hasCube = true;
 
-                // Exit the for loop
-                // In theory we should return some Int value so we know the status of the request
-                // As it is theoretically possible to run out of cube objects available
-                // Or for some error to occur
-                return;
+                    // Return here as we only want to assign one game object to player
+                    return;
+                }
+            }
+            else // If Player has a cube and wishes to return it
+            {
+                if (Networking.GetOwner(cubeArray[i]) == player) // Iterate through cubeArray and see if the Player owns the corresponding game object
+                {
+                    cubeArrayStatus[i] = false;
+
+                    // No return here as it's more beneficial to continue checking each game object
+                    // Need to test what happens when a player who owns a game object leaves the world
+                    // Does ownership of their game object get passed to the Master or to a random player?
+                }
             }
         }
-        */
+
+        // These need to be done here as it can't be done inside of the else
+        // If the execution makes it to this point, it must be because either:
+        // The player was returning their cube(s) and the else condition finished iterating
+        // The for loop could not find an available cube to assign to the player so they should be treated as if they don't have a cube
+
+        hasCube = false;
+
+        // Serialise to sync cubeArrayStatus to all players
+        RequestSerialization();
+        OnDeserialization();
+
     }
 
     public override void OnDeserialization()
@@ -94,6 +99,7 @@ public class ToggleCubePool : UdonSharpBehaviour
 
     public void Update()
     {
+        /*
         debug.text = Networking.IsMaster.ToString();
         debug.text += "\n";
         for (int i = 0;i < cubeArray.Length; i++)
@@ -101,19 +107,6 @@ public class ToggleCubePool : UdonSharpBehaviour
             debug.text += cubeArrayStatus[i].ToString() + " ";
         }
         debug.text += "\n";
-
-        //for (int i = 0; i < cubeArray.Length; i++)
-        //{
-        //   debug.text += cubeArrayStatusLocal[i].ToString() + " ";
-        //}
-        /*
-        if (tracking)
-        {
-            VRCPlayerApi.TrackingData headTrackingData = player.GetTrackingData(VRCPlayerApi.TrackingDataType.Head);
-            Vector3 headPos = headTrackingData.position;
-            headPos.y = headPos.y + 2.0f;
-            cubeFromPool.transform.position = headPos;
-        }
         */
     }
 }
