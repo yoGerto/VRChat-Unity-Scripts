@@ -5,6 +5,7 @@ using UnityEngine;
 using VRC.SDK3.Components;
 using VRC.SDKBase;
 using VRC.Udon;
+using static VRC.Core.ApiAvatar;
 
 public class ToggleCubePool : UdonSharpBehaviour
 {
@@ -100,63 +101,126 @@ public class ToggleCubePool : UdonSharpBehaviour
         }
     }
 
+
     public override void OnPlayerLeft(VRCPlayerApi player)
     {
+        
+        Debug.Log("A player has left the instance");
+
+        SendCustomEventDelayedSeconds("PreCubeCleanUp", 0.1f);
+
+        SendCustomEventDelayedSeconds("CubeCleanUp", 1.0f);
+
+        //Debug.Log("Ownership of the errand cube(s) should now be with the Pool Toggle owner");
+
         /*
-        if (player != Networking.Master)
+        if (Networking.GetOwner(this.gameObject) != player)
         {
-            // This guard prevents any non-master players from running this code
+            Debug.Log("Current player does not own the Pool Toggle");
+            Debug.Log("Returning...");
             return;
         }
         */
 
-        if (Networking.GetOwner(this.gameObject) != player)
-        {
-            // In practice it seems that only the owner of the cubePool should be the one to run this cleanup code
-            // So this guard exists as an explicit rejection of the non-owner players
-            // This is because if multiple people try to set the UdonSync variable it could cause some hijinks 
-            return;
-        }
+        //Debug.Log("Current player DOES own the Pool Toggle");
+        //Debug.Log("Running through to Cube CleanUp");
 
-        // This is my attempt at writing some cleanup code
-        // My working assumption is that the Instance Master recieves ownership of the Game Objects of the leaving player
-        // However, I will need to test how this code works when the Master leaves the game instance
-        // Because there could potentially be a race condition
+        //Before we run the Cube Cleanup, we need to determine if the Instance Master has a cube
 
-        /*
-        // Iterate through cubeArray
-        for (int i = 0; i < cubeArray.Length; i++)
+        //Networking.SetOwner(player, this.gameObject);
+
+        //SendCustomEventDelayedSeconds("CubeCleanUp", 1.0f);
+
+
+    }
+
+    public void PreCubeCleanUp()
+    {
+        Debug.Log("Running PreCubeCleanUp...");
+
+        if (Networking.IsMaster)
         {
-            // Check ownership of each object in array
-            if (Networking.GetOwner(cubeArray[i]) == player)
+            Debug.Log("This player is the master");
+            // Need to transfer ownership of any cubes that are not loaned by the Instance Master to the player who owns the Pool Toggle
+            for (int i = 0; i < cubeArray.Length; i++)
             {
-                // We are only interested in cubes that we have not loaned from the pool
-                if (i != cubeLocalInt)
+                Debug.Log("i = " + i);
+                // If Instance Master owns the cube
+                if (Networking.GetOwner(cubeArray[i]) == player)
                 {
-                    // If it is a cube we have not loaned, then set to Inactive and update cubeArrayStatus accordingly
-                    // This marks the cube as available to be 'loaned' again and every player, after Serialization, will also have the cube as inactive
-                    cubeArray[i].SetActive(false);
-                    cubeArrayStatus[i] = false;
+                    Debug.Log("cubeArray[" + i + "] is owned by current player");
+                    // If the cube is not one that we've loaned
+                    if (i != cubeLocalInt)
+                    {
+                        Debug.Log("cubeArray[" + i + "] is not the cube we loaned");
+                        // If player who owns the Pool Toggle is not also the Instance Master
+                        // - Attempting to transfer ownership of an object that you already own to yourself raises a network warning
+
+                        if (Networking.GetOwner(this.gameObject) != player)
+                        {
+                            Debug.Log("The Instance Master does NOT own the pool toggle");
+                            // Transfer ownership of the cube to the Pool Toggle owner
+                            Networking.SetOwner(Networking.GetOwner(this.gameObject), cubeArray[i]);
+                            Debug.Log("Ownership of cubeArray[" + i + "] has been transfered to the pool toggle owner");
+                        }
+                        else
+                        {
+                            Debug.Log("The Instance Master already owns the pool toggle, so we do not need to transfer ownership");
+                        }
+                    }
                 }
             }
         }
-        */
+        else
+        {
+            Debug.Log("This player is NOT the Instance Master!");
+            Debug.Log("Skipping...");
+        }
 
-        // Could the problem be that I don't own the cube pool toggle?
+        Debug.Log("Ownership of the errand cube(s) should now be with the Pool Toggle owner");
+    }
+
+    public void CubeCleanUp()
+    {
+        Debug.Log("Running CubeCleanUp...");
+
+        Debug.Log("cubeLocalInt = " + cubeLocalInt);
 
         // Iterate through cubeArray
         for (int i = 0; i < cubeArray.Length; i++)
         {
+            Debug.Log("i = " + i);
             // Check ownership of each object in array
             if (Networking.GetOwner(cubeArray[i]) == player)
             {
+                Debug.Log("cubeArray[" + i + "] is owned by current player");
                 // We are only interested in cubes that we have not loaned from the pool
                 if (i != cubeLocalInt)
                 {
+                    Debug.Log("cubeArray[" + i + "] is not the cube we loaned");
                     // If it is a cube we have not loaned then set corresponding cubeArrayStatus to false
                     // When this is serialized, all players should be up to date on which cube(s) are available to loan
-                    cubeArrayStatus[i] = false;
+                    if (cubeArray[i].activeInHierarchy)
+                    {
+                        Debug.Log("cubeArray[" + i + "] is active in the scene");
+                        Debug.Log("Setting cubeArray[" + i + "] status to false ");
+                        cubeArrayStatus[i] = false;
+                    }
+                    else
+                    {
+                        Debug.Log("cubeArray[" + i + "] is already inactive, so no further changes needed");
+                    }
+
+                    //cubeArrayStatus[i] = false;
                 }
+                else
+                {
+                    Debug.Log("cubeArray[" + i + "] IS the cube we loaned");
+                }
+            }
+            else
+            {
+                Debug.Log("cubeArray[" + i + "] is NOT owned by current player");
             }
         }
 
