@@ -12,10 +12,10 @@ public class ToggleCubePool : UdonSharpBehaviour
     public GameObject[] cubeArray;
     [UdonSynced] public bool[] cubeArrayStatus;
 
-    private GameObject cubeFromPool;
+    //private GameObject cubeFromPool;
     private VRCPlayerApi player;
     private bool hasCube = false;
-    private int cubeIter = -1;
+    private int cubeLocalInt = -1;
 
     void Start()
     {
@@ -35,6 +35,8 @@ public class ToggleCubePool : UdonSharpBehaviour
 
     public override void Interact()
     {
+        Debug.Log("Player has interacted with the toggle");
+
         // Set local player as owner of toggle, as this is required to use RequestSerialization
         Networking.SetOwner(player, this.gameObject);
 
@@ -47,8 +49,10 @@ public class ToggleCubePool : UdonSharpBehaviour
                 {
                     cubeArrayStatus[i] = true;
 
-                    // Set Ownership of GameObject to the player that interacting player
-                    // This should be sycned over the network so can be done here instead
+                    cubeLocalInt = i;
+
+                    // Set Ownership of GameObject to the interacting player
+                    // This should be sycned over the network so its OK to do it here
                     Networking.SetOwner(player, cubeArray[i]);
 
                     // Serialise to sync cubeArrayStatus to all players
@@ -74,7 +78,7 @@ public class ToggleCubePool : UdonSharpBehaviour
             }
         }
 
-        // These need to be done here as it can't be done inside of the else
+        // These need to be done here as it can't be done inside of the else statement
         // If the execution makes it to this point, it must be because either:
         // The player was returning their cube(s) and the else condition finished iterating
         // The for loop could not find an available cube to assign to the player so they should be treated as if they don't have a cube
@@ -94,6 +98,71 @@ public class ToggleCubePool : UdonSharpBehaviour
             // use the cubeArrayStatus bool to set the active state of each cube in cubeArray
             cubeArray[i].SetActive(cubeArrayStatus[i]);
         }
+    }
+
+    public override void OnPlayerLeft(VRCPlayerApi player)
+    {
+        /*
+        if (player != Networking.Master)
+        {
+            // This guard prevents any non-master players from running this code
+            return;
+        }
+        */
+
+        if (Networking.GetOwner(this.gameObject) != player)
+        {
+            // In practice it seems that only the owner of the cubePool should be the one to run this cleanup code
+            // So this guard exists as an explicit rejection of the non-owner players
+            // This is because if multiple people try to set the UdonSync variable it could cause some hijinks 
+            return;
+        }
+
+        // This is my attempt at writing some cleanup code
+        // My working assumption is that the Instance Master recieves ownership of the Game Objects of the leaving player
+        // However, I will need to test how this code works when the Master leaves the game instance
+        // Because there could potentially be a race condition
+
+        /*
+        // Iterate through cubeArray
+        for (int i = 0; i < cubeArray.Length; i++)
+        {
+            // Check ownership of each object in array
+            if (Networking.GetOwner(cubeArray[i]) == player)
+            {
+                // We are only interested in cubes that we have not loaned from the pool
+                if (i != cubeLocalInt)
+                {
+                    // If it is a cube we have not loaned, then set to Inactive and update cubeArrayStatus accordingly
+                    // This marks the cube as available to be 'loaned' again and every player, after Serialization, will also have the cube as inactive
+                    cubeArray[i].SetActive(false);
+                    cubeArrayStatus[i] = false;
+                }
+            }
+        }
+        */
+
+        // Could the problem be that I don't own the cube pool toggle?
+
+        // Iterate through cubeArray
+        for (int i = 0; i < cubeArray.Length; i++)
+        {
+            // Check ownership of each object in array
+            if (Networking.GetOwner(cubeArray[i]) == player)
+            {
+                // We are only interested in cubes that we have not loaned from the pool
+                if (i != cubeLocalInt)
+                {
+                    // If it is a cube we have not loaned then set corresponding cubeArrayStatus to false
+                    // When this is serialized, all players should be up to date on which cube(s) are available to loan
+                    cubeArrayStatus[i] = false;
+                }
+            }
+        }
+
+        // Serialise to sync cubeArrayStatus to all players
+        RequestSerialization();
+        OnDeserialization();
     }
 
 
