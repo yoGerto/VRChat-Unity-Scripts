@@ -111,27 +111,6 @@ public class ToggleCubePool : UdonSharpBehaviour
 
         SendCustomEventDelayedSeconds("CubeCleanUp", 1.0f);
 
-        //Debug.Log("Ownership of the errand cube(s) should now be with the Pool Toggle owner");
-
-        /*
-        if (Networking.GetOwner(this.gameObject) != player)
-        {
-            Debug.Log("Current player does not own the Pool Toggle");
-            Debug.Log("Returning...");
-            return;
-        }
-        */
-
-        //Debug.Log("Current player DOES own the Pool Toggle");
-        //Debug.Log("Running through to Cube CleanUp");
-
-        //Before we run the Cube Cleanup, we need to determine if the Instance Master has a cube
-
-        //Networking.SetOwner(player, this.gameObject);
-
-        //SendCustomEventDelayedSeconds("CubeCleanUp", 1.0f);
-
-
     }
 
     public void PreCubeCleanUp()
@@ -140,7 +119,7 @@ public class ToggleCubePool : UdonSharpBehaviour
 
         if (Networking.IsMaster)
         {
-            Debug.Log("This player is the master");
+            Debug.Log("This player is the Instance Master");
             // Need to transfer ownership of any cubes that are not loaned by the Instance Master to the player who owns the Pool Toggle
             for (int i = 0; i < cubeArray.Length; i++)
             {
@@ -155,7 +134,6 @@ public class ToggleCubePool : UdonSharpBehaviour
                         Debug.Log("cubeArray[" + i + "] is not the cube we loaned");
                         // If player who owns the Pool Toggle is not also the Instance Master
                         // - Attempting to transfer ownership of an object that you already own to yourself raises a network warning
-
                         if (Networking.GetOwner(this.gameObject) != player)
                         {
                             Debug.Log("The Instance Master does NOT own the pool toggle");
@@ -210,8 +188,6 @@ public class ToggleCubePool : UdonSharpBehaviour
                     {
                         Debug.Log("cubeArray[" + i + "] is already inactive, so no further changes needed");
                     }
-
-                    //cubeArrayStatus[i] = false;
                 }
                 else
                 {
@@ -232,14 +208,6 @@ public class ToggleCubePool : UdonSharpBehaviour
 
     public void Update()
     {
-        /*
-        debug.text = Networking.IsMaster.ToString();
-        debug.text += "\n";
-        for (int i = 0;i < cubeArray.Length; i++)
-        {
-            debug.text += cubeArrayStatus[i].ToString() + " ";
-        }
-        debug.text += "\n";
-        */
+
     }
 }
