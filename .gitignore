@@ -76,3 +76,9 @@ FollowerAI Udon C\# Program Asset.asset.meta
 FollowerAI.cs
 FollowerAI.cs.meta
 bearTest Udon C\# Program Asset.asset
+*.meta
+*.asset
+RespawnTheBloodyBall.cs
+Spawner.cs
+ToggleHQMirror.cs
+ToggleLQMirror.cs
