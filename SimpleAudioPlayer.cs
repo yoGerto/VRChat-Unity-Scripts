@@ -11,7 +11,7 @@ using UdonSharpEditor;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 
-public class TeddyBear : UdonSharpBehaviour
+public class SimpleAudioPlayer : UdonSharpBehaviour
 {
     /* Items used within the script */
     private Animator teddyAnimator;
